@@ -46,7 +46,7 @@ class BaiduBosAdapter extends AbstractAdapter
     {
         try {
             $this->client
-                ->putObject($path, $contents, $config->get('options', []));
+                ->putObject($path, $contents, $this->extractOptions($config));
         } catch (Exception $exception) {
             return  false;
         }
@@ -107,7 +107,8 @@ class BaiduBosAdapter extends AbstractAdapter
     public function rename($path, $newPath)
     {
         try {
-            $this->client->renameObject($path, $newPath);
+            $this->client->copyObject($path, $newPath);
+            $this->client->deleteObject($path);
         } catch (Exception $exception) {
             return false;
         }
@@ -184,7 +185,7 @@ class BaiduBosAdapter extends AbstractAdapter
             $this->client->putObject(
                 rtrim($dirname, '/') . '/',
                 '',
-                $config->get('options', [])
+                $this->extractOptions($config)
             );
         } catch (Exception $exception) {
             return false;
@@ -414,6 +415,26 @@ class BaiduBosAdapter extends AbstractAdapter
     }
 
     /**
+     * Extract options from config
+     *
+     * @param Config $config
+     *
+     * @return array
+     */
+    protected function extractOptions(Config $config)
+    {
+        $options = [];
+
+        foreach (['headers', 'query', 'body', 'request', 'authorize'] as $key) {
+            if ($config->has($key)) {
+                $options[$key] = $config->get($key);
+            }
+        }
+
+        return $options;
+    }
+
+    /**
      * Normalize the object meta array.
      *
      * @param array $meta
@@ -421,7 +442,7 @@ class BaiduBosAdapter extends AbstractAdapter
      *
      * @return array
      */
-    protected function normalizeMeta(array $meta, string $path): array
+    protected function normalizeMeta(array $meta, $path)
     {
         $result =  Util::pathinfo($path);
 
