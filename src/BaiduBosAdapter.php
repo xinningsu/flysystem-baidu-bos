@@ -267,10 +267,6 @@ class BaiduBosAdapter extends AbstractAdapter
 
         $contents = [];
         foreach ($result['contents'] as $row) {
-            if ($row['key'] === $directory) {
-                continue;
-            }
-
             $contents[] = $this->normalizeContent($row);
         }
 
