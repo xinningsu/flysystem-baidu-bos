@@ -8,6 +8,28 @@ use League\Flysystem\Util;
 trait UtilTrait
 {
     /**
+     * @param string $directory
+     * @param false  $recursive
+     *
+     * @return array
+     */
+    public function buildListDirOptions($directory = '', $recursive = false)
+    {
+        $options = [];
+
+        if (!$recursive) {
+            $options['query']['delimiter'] = '/';
+        }
+
+        $directory = trim($directory, '/');
+        if ($directory !== '') {
+            $directory .= '/';
+            $options['query']['prefix'] = $directory;
+        }
+
+        return $options;
+    }
+    /**
      * Extract options from config
      *
      * @param Config $config

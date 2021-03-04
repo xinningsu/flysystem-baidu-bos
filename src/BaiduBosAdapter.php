@@ -5,7 +5,6 @@ namespace Sulao\Flysystem\BaiduBos;
 use Exception;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Config;
-use League\Flysystem\Util;
 use Sulao\BaiduBos\Client;
 
 class BaiduBosAdapter extends AbstractAdapter
@@ -263,18 +262,7 @@ class BaiduBosAdapter extends AbstractAdapter
      */
     public function listContents($directory = '', $recursive = false)
     {
-        $options = [];
-
-        if (!$recursive) {
-            $options['query']['delimiter'] = '/';
-        }
-
-        $directory = trim($directory, '/');
-        if ($directory !== '') {
-            $directory .= '/';
-            $options['query']['prefix'] = $directory;
-        }
-
+        $options = $this->buildListDirOptions($directory, $recursive);
         $result = $this->client->listObjects($options);
 
         $contents = [];
