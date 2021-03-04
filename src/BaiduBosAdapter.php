@@ -177,7 +177,7 @@ class BaiduBosAdapter extends AbstractAdapter
      * @param string $dirname directory name
      * @param Config $config
      *
-     * @return array|false
+     * @return bool
      */
     public function createDir($dirname, Config $config)
     {
@@ -455,9 +455,8 @@ class BaiduBosAdapter extends AbstractAdapter
         }
 
         $return['timestamp'] = strtotime($content['lastModified']);
-        $return = $return + Util::pathinfo($content['key']);
 
-        return $return;
+        return $return + Util::pathinfo($content['key']);
     }
 
     /**
@@ -473,14 +472,26 @@ class BaiduBosAdapter extends AbstractAdapter
             return $this->client->getObjectAcl($path);
         } catch (Exception $exception) {
             if ($exception->getCode() == 404) {
-                try {
-                    return $this->client->getBucketAcl();
-                } catch (Exception $exception) {
-                    return false;
-                }
-            } else {
-                return false;
+                return $this->getBucketAcl();
             }
         }
+
+        return false;
+    }
+
+    /**
+     * Get  bucket acl
+     *
+     * @return array|false
+     */
+    protected function getBucketAcl()
+    {
+        try {
+            $result = $this->client->getBucketAcl();
+        } catch (Exception $exception) {
+            return false;
+        }
+
+        return $result;
     }
 }
