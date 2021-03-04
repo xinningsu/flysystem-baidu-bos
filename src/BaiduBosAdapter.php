@@ -281,20 +281,7 @@ class BaiduBosAdapter extends AbstractAdapter
                 continue;
             }
 
-            $content = [];
-            if (substr($row['key'], -1) === '/') {
-                $content['type'] = 'dir';
-                $content['path'] = rtrim($row['key'], '/');
-            } else {
-                $content['type'] = 'file';
-                $content['path'] = $row['key'];
-                $content['size'] = $row['size'];
-            }
-
-            $content['timestamp'] = strtotime($row['lastModified']);
-            $content = $content + Util::pathinfo($row['key']);
-
-            $contents[] = $content;
+            $contents[] = $this->normalizeContent($row);
         }
 
         return $contents;
@@ -363,18 +350,9 @@ class BaiduBosAdapter extends AbstractAdapter
      */
     public function getVisibility($path)
     {
-        try {
-            $result = $this->client->getObjectAcl($path);
-        } catch (Exception $exception) {
-            if ($exception->getCode() == 404) {
-                try {
-                    $result = $this->client->getBucketAcl();
-                } catch (Exception $exception) {
-                    return false;
-                }
-            } else {
-                return false;
-            }
+        $result = $this->getAcl($path);
+        if ($result === false) {
+            return false;
         }
 
         $permissions = [];
@@ -454,5 +432,55 @@ class BaiduBosAdapter extends AbstractAdapter
             'Content-Length' => 'size',
             'Content-Type'   => 'mimetype',
         ]), ['type' => 'file']);
+    }
+
+    /**
+     * Normalize the content from list contents of dir.
+     *
+     * @param array $content
+     *
+     * @return array
+     */
+    protected function normalizeContent(array $content)
+    {
+        $return = [];
+
+        if (substr($content['key'], -1) === '/') {
+            $return['type'] = 'dir';
+            $return['path'] = rtrim($content['key'], '/');
+        } else {
+            $return['type'] = 'file';
+            $return['path'] = $content['key'];
+            $return['size'] = $content['size'];
+        }
+
+        $return['timestamp'] = strtotime($content['lastModified']);
+        $return = $return + Util::pathinfo($content['key']);
+
+        return $return;
+    }
+
+    /**
+     * Get object acl, if not set, return bucket acl
+     *
+     * @param $path
+     *
+     * @return array|false
+     */
+    protected function getAcl($path)
+    {
+        try {
+            return $this->client->getObjectAcl($path);
+        } catch (Exception $exception) {
+            if ($exception->getCode() == 404) {
+                try {
+                    return $this->client->getBucketAcl();
+                } catch (Exception $exception) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     }
 }

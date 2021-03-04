@@ -247,12 +247,12 @@ class AdapterTest extends TestCase
         static $filesystem;
 
         if (!$filesystem) {
-            $client = new Client(
-                getenv('BOS_KEY'),
-                getenv('BOS_SECRET'),
-                'xinningsu',
-                'gz'
-            );
+            $client = new Client([
+                'access_key' => getenv('BOS_KEY'),
+                'secret_key' => getenv('BOS_SECRET'),
+                'bucket' => 'xinningsu',
+                'region' => 'gz'
+            ]);
             $adapter = new BaiduBosAdapter($client);
             $filesystem = new Filesystem($adapter, ['disable_asserts' => true]);
         }
@@ -265,12 +265,12 @@ class AdapterTest extends TestCase
         static $filesystem;
 
         if (!$filesystem) {
-            $client = new Client(
-                'key_test',
-                'secret_test',
-                'xinningsu_test',
-                'gz_test'
-            );
+            $client = new Client([
+                'access_key' => 'key_test',
+                'secret_key' => 'secret_test',
+                'bucket' => 'xinningsu_test',
+                'region' => 'gz_test'
+            ]);
             $adapter = new BaiduBosAdapter($client);
             $filesystem = new Filesystem($adapter, ['disable_asserts' => true]);
         }
@@ -283,12 +283,12 @@ class AdapterTest extends TestCase
         static $filesystem;
 
         if (!$filesystem) {
-            $client = new ClientMock(
-                'key_test',
-                'secret_test',
-                'xinningsu_test',
-                'gz_test'
-            );
+            $client = new ClientMock([
+                'access_key' => 'key_test',
+                'secret_key' => 'secret_test',
+                'bucket' => 'xinningsu_test',
+                'region' => 'gz_test'
+            ]);
             $adapter = new BaiduBosAdapter($client);
             $filesystem = new Filesystem($adapter, ['disable_asserts' => true]);
         }
