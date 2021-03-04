@@ -350,19 +350,12 @@ class BaiduBosAdapter extends AbstractAdapter
      */
     public function getVisibility($path)
     {
-        $result = $this->getAcl($path);
-        if ($result === false) {
+        $acl = $this->getObjectAcl($path);
+        if ($acl === false) {
             return false;
         }
 
-        $permissions = [];
-        foreach ($result['accessControlList'] as $row) {
-            $ids = array_column($row['grantee'], 'id');
-            if (in_array('*', $ids)) {
-                $permissions = $row['permission'];
-                break;
-            }
-        }
+        $permissions = $this->extractPermissions($acl);
 
         if (in_array('READ', $permissions)) {
             $visibility = 'public-read';
@@ -466,10 +459,11 @@ class BaiduBosAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    protected function getAcl($path)
+    protected function getObjectAcl($path)
     {
         try {
-            return $this->client->getObjectAcl($path);
+            $result = $this->client->getObjectAcl($path);
+            return $result['accessControlList'];
         } catch (Exception $exception) {
             if ($exception->getCode() == 404) {
                 return $this->getBucketAcl();
@@ -480,7 +474,7 @@ class BaiduBosAdapter extends AbstractAdapter
     }
 
     /**
-     * Get  bucket acl
+     * Get bucket acl
      *
      * @return array|false
      */
@@ -492,6 +486,27 @@ class BaiduBosAdapter extends AbstractAdapter
             return false;
         }
 
-        return $result;
+        return $result['accessControlList'];
+    }
+
+    /**
+     * Extract permissions from acl
+     *
+     * @param array $acl
+     *
+     * @return array
+     */
+    protected function extractPermissions(array $acl)
+    {
+        $permissions = [];
+        foreach ($acl as $row) {
+            $ids = array_column($row['grantee'], 'id');
+            if (in_array('*', $ids)) {
+                $permissions = $row['permission'];
+                break;
+            }
+        }
+
+        return $permissions;
     }
 }
