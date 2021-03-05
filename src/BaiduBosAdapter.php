@@ -265,12 +265,15 @@ class BaiduBosAdapter extends AbstractAdapter
         $options = $this->buildListDirOptions($directory, $recursive);
         $result = $this->client->listObjects($options);
 
-        $contents = [];
-        foreach ($result['contents'] as $row) {
-            $contents[] = $this->normalizeContent($row);
-        }
+        $prefixes = isset($result['commonPrefixes'])
+            ? array_map(function ($item) {
+                return ['key' => $item['prefix']];
+            }, $result['commonPrefixes'])
+            : [];
 
-        return $contents;
+        return array_map(function ($content) {
+            return $this->normalizeContent($content);
+        }, array_merge($result['contents'], $prefixes));
     }
 
     /**

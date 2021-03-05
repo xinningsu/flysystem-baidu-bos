@@ -84,14 +84,16 @@ trait UtilTrait
 
         if (substr($content['key'], -1) === '/') {
             $return['type'] = 'dir';
-            $return['path'] = rtrim($content['key'], '/');
+            $return['path'] = $content['key'];
         } else {
             $return['type'] = 'file';
             $return['path'] = $content['key'];
             $return['size'] = $content['size'];
         }
 
-        $return['timestamp'] = strtotime($content['lastModified']);
+        if (isset($content['lastModified'])) {
+            $return['timestamp'] = strtotime($content['lastModified']);
+        }
 
         return $return + Util::pathinfo($content['key']);
     }
