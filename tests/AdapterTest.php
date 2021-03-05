@@ -183,21 +183,21 @@ class AdapterTest extends TestCase
     {
         $this->assertTrue($this->filesystem()->setVisibility(
             'adapter_test.txt',
-            'private'
+            \League\Flysystem\AdapterInterface::VISIBILITY_PRIVATE
         ));
 
         $this->assertEquals(
-            'private',
+            \League\Flysystem\AdapterInterface::VISIBILITY_PRIVATE,
             $this->filesystem()->getVisibility('adapter_test.txt')
         );
 
         $this->assertTrue($this->filesystem()->setVisibility(
             'adapter_test.txt',
-            'public-read'
+            \League\Flysystem\AdapterInterface::VISIBILITY_PUBLIC
         ));
 
         $this->assertEquals(
-            'public-read',
+            \League\Flysystem\AdapterInterface::VISIBILITY_PUBLIC,
             $this->filesystem()->getVisibility('adapter_test2.txt')
         );
     }

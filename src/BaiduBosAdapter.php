@@ -344,9 +344,9 @@ class BaiduBosAdapter extends AbstractAdapter
         $permissions = $this->extractPermissions($acl);
 
         if (in_array('READ', $permissions)) {
-            $visibility = 'public-read';
+            $visibility = self::VISIBILITY_PUBLIC;
         } else {
-            $visibility = 'private';
+            $visibility = self::VISIBILITY_PRIVATE;
         }
 
         return compact('path', 'visibility');
@@ -362,6 +362,10 @@ class BaiduBosAdapter extends AbstractAdapter
      */
     public function setVisibility($path, $visibility)
     {
+        if ($visibility === self::VISIBILITY_PUBLIC) {
+            $visibility = 'public-read';
+        }
+
         try {
             $this->client->putObjectAcl($path, $visibility);
         } catch (Exception $exception) {
