@@ -83,7 +83,7 @@ $mimeType = $filesystem->getMimetype('file.txt');
 $ts = $filesystem->getTimestamp('file.txt');
 
 // Set the visibility for a file.
-$filesystem->setVisibility('file.txt', 'public-read');
+$filesystem->setVisibility('file.txt', 'public');
 
 // Get a file's visibility.
 $visibility = $filesystem->getVisibility('file.txt');
@@ -97,6 +97,10 @@ $filesystem->createDir('test/');
 // List contents of a directory.
 $lists = $filesystem->listContents('test/', true);
 ```
+
+# Integration
+
+- [xinningsu/laravel-filesystem-baidu-bos](https://packagist.org/packages/xinningsu/laravel-filesystem-baidu-bos)
 
 # Reference
 
