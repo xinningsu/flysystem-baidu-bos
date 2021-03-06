@@ -1,6 +1,20 @@
 {
     "name": "xinningsu/flysystem-baidu-bos",
     "description": "Flysystem adapter for BOS(Baidu Object Storage), 百度对象存储 Flysystem 适配器。",
+    "keywords": [
+        "flysystem",
+        "flysystem adapter",
+        "flysystem baidu bos",
+        "baidu bos adapter",
+        "baidu",
+        "bos",
+        "baidu bos",
+        "baidu object storage",
+        "百度",
+        "对象存储",
+        "百度对象存储"
+    ],
+    "homepage": "https://github.com/xinningsu/flysystem-baidu-bos",
     "license": "MIT",
     "authors": [
         {
