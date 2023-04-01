@@ -2,19 +2,31 @@
 
 namespace Sulao\Flysystem\BaiduBos;
 
-use Exception;
-use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Config;
+use League\Flysystem\FileAttributes;
+use League\Flysystem\FilesystemAdapter;
+use League\Flysystem\UnableToCreateDirectory;
+use League\Flysystem\UnableToCopyFile;
+use League\Flysystem\UnableToDeleteDirectory;
+use League\Flysystem\UnableToDeleteFile;
+use League\Flysystem\UnableToListContents;
+use League\Flysystem\UnableToMoveFile;
+use League\Flysystem\UnableToReadFile;
+use League\Flysystem\UnableToRetrieveMetadata;
+use League\Flysystem\UnableToSetVisibility;
+use League\Flysystem\UnableToWriteFile;
 use Sulao\BaiduBos\Client;
+use Sulao\BaiduBos\Exception;
+use Throwable;
 
-class BaiduBosAdapter extends AbstractAdapter
+class BaiduBosAdapter implements FilesystemAdapter
 {
     use UtilTrait;
 
     /**
      * @var Client
      */
-    protected $client;
+    protected Client $client;
 
     /**
      * BaiduBosAdapter constructor.
@@ -27,113 +39,90 @@ class BaiduBosAdapter extends AbstractAdapter
     }
 
     /**
-     * @return Client
-     */
-    public function getClient()
-    {
-        return $this->client;
-    }
-
-    /**
      * Write a new file.
      *
      * @param string $path
      * @param string $contents
-     * @param Config $config   Config object
+     * @param Config $config
      *
-     * @return array|false false on failure file meta data on success
+     * @return void
+     * @throws UnableToWriteFile
      */
-    public function write($path, $contents, Config $config)
+    public function write(string $path, string $contents, Config $config): void
     {
         try {
             $this->client
                 ->putObject($path, $contents, $this->extractOptions($config));
-        } catch (Exception $exception) {
-            return  false;
+        } catch (Throwable $e) {
+            throw UnableToWriteFile::atLocation($path, $e->getMessage(), $e);
         }
-
-        return $this->client->getObjectMeta($path);
     }
 
     /**
      * Write a new file using a stream.
      *
      * @param string   $path
-     * @param resource $resource
-     * @param Config   $config   Config object
+     * @param resource $contents
+     * @param Config $config
      *
-     * @return array|false false on failure file meta data on success
+     * @return void
+     * @throws UnableToWriteFile
      */
-    public function writeStream($path, $resource, Config $config)
+    public function writeStream(string $path, $contents, Config $config): void
     {
-        return $this->write($path, stream_get_contents($resource), $config);
+        $this->write($path, stream_get_contents($contents), $config);
     }
 
     /**
-     * Update a file.
+     * Rename/Move a file.
      *
-     * @param string $path
-     * @param string $contents
-     * @param Config $config   Config object
+     * @param string $source
+     * @param string $destination
+     * @param Config $config
      *
-     * @return array|false false on failure file meta data on success
+     * @return void
+     * @throws UnableToMoveFile
      */
-    public function update($path, $contents, Config $config)
-    {
-        return $this->write($path, $contents, $config);
-    }
-
-    /**
-     * Update a file using a stream.
-     *
-     * @param string   $path
-     * @param resource $resource
-     * @param Config   $config   Config object
-     *
-     * @return array|false false on failure file meta data on success
-     */
-    public function updateStream($path, $resource, Config $config)
-    {
-        return $this->writeStream($path, $resource, $config);
-    }
-
-    /**
-     * Rename a file.
-     *
-     * @param string $path
-     * @param string $newPath
-     *
-     * @return bool
-     */
-    public function rename($path, $newPath)
+    public function move(
+        string $source,
+        string $destination,
+        Config $config
+    ): void
     {
         try {
-            $this->client->copyObject($path, $newPath);
-            $this->client->deleteObject($path);
-        } catch (Exception $exception) {
-            return false;
+            $this->client->copyObject($source, $destination);
+            $this->client->deleteObject($source);
+        } catch (Throwable $e) {
+            throw UnableToMoveFile::fromLocationTo($source, $destination, $e);
         }
-
-        return true;
     }
+
 
     /**
      * Copy a file.
      *
-     * @param string $path
-     * @param string $newPath
+     * @param string $source
+     * @param string $destination
+     * @param Config $config
      *
-     * @return bool
+     * @return void
+     * @throws UnableToCopyFile
      */
-    public function copy($path, $newPath)
+    public function copy(
+        string $source,
+        string $destination,
+        Config $config
+    ): void
     {
         try {
-            $this->client->copyObject($path, $newPath);
-        } catch (Exception $exception) {
-            return false;
+            $this->client->copyObject($source, $destination);
+        } catch (Throwable $e) {
+            throw UnableToCopyFile::fromLocationTo(
+                $source,
+                $e->getMessage(),
+                $e
+            );
         }
-
-        return true;
     }
 
     /**
@@ -141,58 +130,16 @@ class BaiduBosAdapter extends AbstractAdapter
      *
      * @param string $path
      *
-     * @return bool
+     * @return void
+     * @throws UnableToDeleteFile
      */
-    public function delete($path)
+    public function delete(string $path): void
     {
         try {
             $this->client->deleteObject($path);
-        } catch (Exception $exception) {
-            return false;
+        } catch (Throwable $e) {
+            throw UnableToDeleteFile::atLocation($path, $e->getMessage(), $e);
         }
-
-        return true;
-    }
-
-    /**
-     * Delete a directory.
-     *
-     * @param string $dirname
-     *
-     * @return bool
-     */
-    public function deleteDir($dirname)
-    {
-        try {
-            $this->client->deleteObject(rtrim($dirname, '/') . '/');
-        } catch (Exception $exception) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Create a directory.
-     *
-     * @param string $dirname directory name
-     * @param Config $config
-     *
-     * @return bool
-     */
-    public function createDir($dirname, Config $config)
-    {
-        try {
-            $this->client->putObject(
-                rtrim($dirname, '/') . '/',
-                '',
-                $this->extractOptions($config)
-            );
-        } catch (Exception $exception) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -202,11 +149,12 @@ class BaiduBosAdapter extends AbstractAdapter
      *
      * @return bool
      */
-    public function has($path)
+    public function fileExists(string $path): bool
     {
         try {
             $this->client->getObjectMeta($path);
-        } catch (Exception $exception) {
+        } catch (Throwable $e) {
+            error_log($e->getMessage());
             return false;
         }
 
@@ -214,21 +162,158 @@ class BaiduBosAdapter extends AbstractAdapter
     }
 
     /**
+     * Check whether a dir exists.
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public function directoryExists(string $path): bool
+    {
+        return $this->fileExists($path);
+    }
+
+
+    /**
+     * Create a directory.
+     *
+     * @param string $path
+     * @param Config $config
+     *
+     * @return void
+     * @throws UnableToCreateDirectory
+     */
+    public function createDirectory(string $path, Config $config): void
+    {
+        try {
+            $this->client->putObject(
+                rtrim($path, '/') . '/',
+                '',
+                $this->extractOptions($config)
+            );
+        } catch (Throwable $e) {
+            throw UnableToCreateDirectory::atLocation(
+                $path,
+                $e->getMessage(),
+                $e
+            );
+        }
+
+    }
+
+    /**
+     * Get the mime-type of a file.
+     *
+     * @param string $path
+     *
+     * @return FileAttributes
+     * @throws UnableToRetrieveMetadata
+     */
+    public function mimeType(string $path): FileAttributes
+    {
+        try {
+            $meta = $this->getMetadata($path);
+            $mimeType = $meta['mimeType'];
+        } catch (Throwable $e) {
+            throw UnableToRetrieveMetadata::mimeType(
+                $path,
+                $e->getMessage(),
+                $e
+            );
+        }
+
+        return new FileAttributes($path, null, null, null, $mimeType);
+    }
+
+
+    /**
+     * Get the lastModified of a file.
+     *
+     * @param string $path
+     *
+     * @return FileAttributes
+     * @throws UnableToRetrieveMetadata
+     */
+    public function lastModified(string $path): FileAttributes
+    {
+        try {
+            $meta = $this->getMetadata($path);
+            $lastModified = $meta['lastModified'];
+        } catch (Throwable $e) {
+            throw UnableToRetrieveMetadata::lastModified(
+                $path,
+                $e->getMessage(),
+                $e
+            );
+        }
+
+        return new FileAttributes($path, null, null, $lastModified);
+    }
+
+    /**
+     * Get the size of a file.
+     *
+     * @param string $path
+     *
+     * @return FileAttributes
+     * @throws UnableToRetrieveMetadata
+     */
+    public function fileSize(string $path): FileAttributes
+    {
+        try {
+            $meta = $this->getMetadata($path);
+            $fileSize = $meta['fileSize'];
+        } catch (Throwable $e) {
+            throw UnableToRetrieveMetadata::fileSize(
+                $path,
+                $e->getMessage(),
+                $e
+            );
+        }
+
+        return new FileAttributes($path, $fileSize);
+    }
+
+
+    /**
+     * Delete a directory.
+     *
+     * @param string $path
+     *
+     * @return void
+     * @throws UnableToDeleteDirectory
+     */
+    public function deleteDirectory(string $path): void
+    {
+        try {
+            $this->client->deleteObject(rtrim($path, '/') . '/');
+        } catch (Throwable $e) {
+            throw UnableToDeleteDirectory::atLocation(
+                $path,
+                $e->getMessage(),
+                $e
+            );
+        }
+    }
+
+
+    /**
      * Read a file.
      *
      * @param string $path
      *
-     * @return array|false
+     * @return string
+     * @throws UnableToReadFile
      */
-    public function read($path)
+    public function read(string $path): string
     {
         try {
             $contents = $this->client->getObject($path);
-        } catch (Exception $exception) {
-            return false;
+        } catch (Throwable $e) {
+            throw UnableToReadFile::fromLocation($path, $e->getMessage(), $e);
         }
 
-        return compact('path', 'contents');
+        return $contents;
     }
 
     /**
@@ -236,34 +321,36 @@ class BaiduBosAdapter extends AbstractAdapter
      *
      * @param string $path
      *
-     * @return array|false
+     * @return resource
+     * @throws UnableToReadFile
      */
-    public function readStream($path)
+    public function readStream(string $path)
     {
-        $result = $this->read($path);
-        if ($result === false) {
-            return false;
-        }
-
+        $contents = $this->read($path);
         $stream = fopen('php://temp', 'w+b');
-        fputs($stream, $result['contents']);
+        fputs($stream, $contents);
         rewind($stream);
 
-        return compact('path', 'stream');
+        return $stream;
     }
 
     /**
      * List contents of a directory.
      *
-     * @param string $directory
-     * @param bool   $recursive
+     * @param string $path
+     * @param bool   $deep
      *
-     * @return array
+     * @return iterable
+     * @throws UnableToListContents
      */
-    public function listContents($directory = '', $recursive = false)
+    public function listContents(string $path, bool $deep): iterable
     {
-        $options = $this->buildListDirOptions($directory, $recursive);
-        $result = $this->client->listObjects($options);
+        $options = $this->buildListDirOptions($path, $deep);
+        try {
+            $result = $this->client->listObjects($options);
+        } catch (Throwable $e) {
+            throw UnableToListContents::atLocation($path, $e->getMessage(), $e);
+        }
 
         $prefixes = isset($result['commonPrefixes'])
             ? array_map(function ($item) {
@@ -277,83 +364,36 @@ class BaiduBosAdapter extends AbstractAdapter
     }
 
     /**
-     * Get all the meta data of a file or directory.
-     *
-     * @param string $path
-     *
-     * @return array|false
-     */
-    public function getMetadata($path)
-    {
-        try {
-            $meta = $this->client->getObjectMeta($path);
-        } catch (Exception $exception) {
-            return false;
-        }
-
-        return $this->normalizeMeta($meta, $path);
-    }
-
-    /**
-     * Get the size of a file.
-     *
-     * @param string $path
-     *
-     * @return array|false
-     */
-    public function getSize($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    /**
-     * Get the mime-type of a file.
-     *
-     * @param string $path
-     *
-     * @return array|false
-     */
-    public function getMimeType($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    /**
-     * Get the timestamp of a file.
-     *
-     * @param string $path
-     *
-     * @return array|false
-     */
-    public function getTimestamp($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    /**
      * Get the visibility of a file.
      *
      * @param string $path
      *
-     * @return array|false
+     * @return FileAttributes
      */
-    public function getVisibility($path)
+
+    public function visibility(string $path): FileAttributes
     {
-        $acl = $this->getObjectAcl($path);
-        if ($acl === false) {
-            return false;
+        try {
+            $acl = $this->getObjectAcl($path);
+        } catch (Throwable $e) {
+            throw UnableToRetrieveMetadata::visibility(
+                $path,
+                $e->getMessage(),
+                $e
+            );
         }
 
         $permissions = $this->extractPermissions($acl);
 
         if (in_array('READ', $permissions)) {
-            $visibility = self::VISIBILITY_PUBLIC;
+            $visibility = 'public';
         } else {
-            $visibility = self::VISIBILITY_PRIVATE;
+            $visibility = 'private';
         }
 
-        return compact('path', 'visibility');
+        return new FileAttributes($path, null, $visibility);
     }
+
 
     /**
      * Set the visibility for a file.
@@ -361,57 +401,71 @@ class BaiduBosAdapter extends AbstractAdapter
      * @param string $path
      * @param string $visibility
      *
-     * @return array|false file meta data
+     * @return void
      */
-    public function setVisibility($path, $visibility)
+    public function setVisibility(string $path, string $visibility): void
     {
-        if ($visibility === self::VISIBILITY_PUBLIC) {
+        if ($visibility === 'public') {
             $visibility = 'public-read';
         }
 
         try {
             $this->client->putObjectAcl($path, $visibility);
-        } catch (Exception $exception) {
-            return false;
+        } catch (Throwable $e) {
+            throw UnableToSetVisibility::atLocation(
+                $path,
+                $e->getMessage(),
+                $e
+            );
         }
+    }
 
-        return compact('path', 'visibility');
+    /**
+     * Get all the meta data of a file or directory.
+     *
+     * @param string $path
+     *
+     * @return array
+     * @throws Exception
+     */
+    protected function getMetadata(string $path): array
+    {
+        $meta = $this->client->getObjectMeta($path);
+        return $this->normalizeMeta($meta, $path);
     }
 
     /**
      * Get object acl, if not set, return bucket acl
      *
-     * @param $path
+     * @param string $path
      *
-     * @return array|false
+     * @return array
+     * @throws Throwable
+     * @throws Exception
      */
-    protected function getObjectAcl($path)
+    protected function getObjectAcl(string $path): array
     {
         try {
             $result = $this->client->getObjectAcl($path);
             return $result['accessControlList'];
-        } catch (Exception $exception) {
+        } catch (Throwable $exception) {
             if ($exception->getCode() == 404) {
                 return $this->getBucketAcl();
             }
-        }
 
-        return false;
+            throw $exception;
+        }
     }
 
     /**
      * Get bucket acl
      *
-     * @return array|false
+     * @return array
+     * @throws Exception
      */
-    protected function getBucketAcl()
+    protected function getBucketAcl(): array
     {
-        try {
-            $result = $this->client->getBucketAcl();
-        } catch (Exception $exception) {
-            return false;
-        }
-
+        $result = $this->client->getBucketAcl();
         return $result['accessControlList'];
     }
 }

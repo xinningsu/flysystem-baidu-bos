@@ -3,7 +3,6 @@
 namespace Sulao\Flysystem\BaiduBos;
 
 use League\Flysystem\Config;
-use League\Flysystem\Util;
 
 trait UtilTrait
 {
@@ -13,7 +12,10 @@ trait UtilTrait
      *
      * @return array
      */
-    public function buildListDirOptions($directory = '', $recursive = false)
+    public function buildListDirOptions(
+        string $directory = '',
+        bool $recursive = false
+    ): array
     {
         $options = [];
 
@@ -36,12 +38,12 @@ trait UtilTrait
      *
      * @return array
      */
-    protected function extractOptions(Config $config)
+    protected function extractOptions(Config $config): array
     {
         $options = [];
 
         foreach (['headers', 'query', 'body', 'request', 'authorize'] as $key) {
-            if ($config->has($key)) {
+            if ($config->get($key)) {
                 $options[$key] = $config->get($key);
             }
         }
@@ -57,18 +59,23 @@ trait UtilTrait
      *
      * @return array
      */
-    protected function normalizeMeta(array $meta, $path)
+    protected function normalizeMeta(array $meta, string $path): array
     {
-        $result =  Util::pathinfo($path);
+        $result = pathinfo($path);
 
         if (isset($meta['Last-Modified'])) {
-            $result['timestamp'] = strtotime($meta['Last-Modified']);
+            $result['lastModified'] = strtotime($meta['Last-Modified']);
         }
 
-        return array_merge($result, Util::map($meta, [
-            'Content-Length' => 'size',
-            'Content-Type'   => 'mimetype',
-        ]), ['type' => 'file']);
+        if (isset($meta['Content-Length'])) {
+            $result['fileSize'] = $meta['Content-Length'];
+        }
+
+        if (isset($meta['Content-Type'])) {
+            $result['mimeType'] = $meta['Content-Type'];
+        }
+
+        return array_merge($result, ['type' => 'file']);
     }
 
     /**
@@ -78,11 +85,11 @@ trait UtilTrait
      *
      * @return array
      */
-    protected function normalizeContent(array $content)
+    protected function normalizeContent(array $content): array
     {
         $return = [];
 
-        if (substr($content['key'], -1) === '/') {
+        if (str_ends_with($content['key'], '/')) {
             $return['type'] = 'dir';
             $return['path'] = $content['key'];
         } else {
@@ -95,7 +102,7 @@ trait UtilTrait
             $return['timestamp'] = strtotime($content['lastModified']);
         }
 
-        return $return + Util::pathinfo($content['key']);
+        return $return + pathinfo($content['key']);
     }
 
     /**
@@ -105,7 +112,7 @@ trait UtilTrait
      *
      * @return array
      */
-    protected function extractPermissions(array $acl)
+    protected function extractPermissions(array $acl): array
     {
         $permissions = [];
         foreach ($acl as $row) {
