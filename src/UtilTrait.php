@@ -15,8 +15,7 @@ trait UtilTrait
     public function buildListDirOptions(
         string $directory = '',
         bool $recursive = false
-    ): array
-    {
+    ): array {
         $options = [];
 
         if (!$recursive) {

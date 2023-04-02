@@ -3,20 +3,21 @@
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
 
 use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\TestCase;
 use Sulao\Flysystem\BaiduBos\BaiduBosAdapter;
 use Sulao\BaiduBos\Client;
 
 class AdapterTest extends TestCase
 {
-    protected function testDir()
+    public function testDir()
     {
         $this->filesystem()->createDirectory('adapter_dir/');
-        $this->assertEmpty($this->filesystem()->listContents('adapter_dir/'));
+        $this->assertTrue($this->filesystem()->directoryExists('adapter_dir/'));
         $this->filesystem()->deleteDirectory('adapter_dir/');
     }
 
-    protected function testException()
+    public function testException()
     {
         $filesystem = $this->filesystem2();
 
@@ -25,28 +26,113 @@ class AdapterTest extends TestCase
             $filesystem->write('test.txt', 'test');
         } catch (Throwable $exception) {
         }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
 
+        $exception = null;
+        try {
+            $stream = fopen('php://temp', 'w+b');
+            fputs($stream, 'adapter test');
+            rewind($stream);
+            $filesystem->writeStream('test.txt', $stream);
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
 
-        $stream = fopen('php://temp', 'w+b');
-        fputs($stream, 'adapter test');
-        rewind($stream);
-        $this->assertFalse($filesystem->writeStream('test.txt', $stream));
+        $exception = null;
+        try {
+            $filesystem->move('test.txt', 'test2.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
 
-        $this->assertFalse($filesystem->rename('test.txt', 'test2.txt'));
-        $this->assertFalse($filesystem->copy('test.txt', 'test2.txt'));
-        $this->assertFalse($filesystem->delete('test.txt'));
-        $this->assertFalse($filesystem->deleteDir('testttt/'));
-        $this->assertFalse($filesystem->createDir('testttt/'));
-        $this->assertFalse($filesystem->read('test.txt'));
-        $this->assertFalse($filesystem->readStream('test.txt'));
-        $this->assertFalse($filesystem->getMetadata('test.txt'));
-        $this->assertFalse($filesystem->getVisibility('test.txt'));
-        $this->assertFalse($filesystem->setVisibility('test.txt', 'private'));
+        $exception = null;
+        try {
+            $filesystem->copy('test.txt', 'test2.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
 
-        $this->assertFalse($this->filesystem3()->getVisibility('test.txt'));
+        $exception = null;
+        try {
+            $filesystem->delete('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->deleteDirectory('testttt/');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->createDirectory('testttt/');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $this->assertFalse($filesystem->directoryExists('testttt/'));
+
+        $exception = null;
+        try {
+            $filesystem->listContents('testttt/');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->read('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->readStream('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->mimeType('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->lastModified('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->fileSize('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->visibility('test.txt');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
+
+        $exception = null;
+        try {
+            $filesystem->setVisibility('test.txt', 'private');
+        } catch (Throwable $exception) {
+        }
+        $this->assertInstanceOf(FilesystemException::class, $exception);
     }
 
-    protected function testAdapter()
+    public function testAdapter()
     {
         $this->addFile();
         $this->getFile();
@@ -142,7 +228,6 @@ class AdapterTest extends TestCase
             'adapter_test.txt',
             'private'
         );
-
         $this->assertEquals(
             'private',
             $this->filesystem()->visibility('adapter_test.txt')
@@ -152,16 +237,15 @@ class AdapterTest extends TestCase
             'adapter_test.txt',
             'public'
         );
-
         $this->assertEquals(
             'public',
-            $this->filesystem()->getVisibility('adapter_test2.txt')
+            $this->filesystem()->visibility('adapter_test2.txt')
         );
     }
 
     protected function listContents()
     {
-        $result = $this->filesystem()->listContents('', false);
+        $result = $this->filesystem()->listContents('', false)->toArray();
         $this->assertTrue(is_array($result));
         $contents = array_column($result, 'path');
         $this->assertTrue(in_array('adapter_test.txt', $contents));
@@ -170,14 +254,14 @@ class AdapterTest extends TestCase
             $contents
         ));
 
-        $result = $this->filesystem()->listContents('', true);
+        $result = $this->filesystem()->listContents('', true)->toArray();
         $contents = array_column($result, 'path');
         $this->assertTrue(in_array(
             'adapter_test/adapter_test4.txt',
             $contents
         ));
 
-        $result = $this->filesystem()->listContents('adapter_test/', false);
+        $result = $this->filesystem()->listContents('adapter_test/', false)->toArray();
         $contents = array_column($result, 'path');
         $this->assertFalse(in_array('adapter_test.txt', $contents));
         $this->assertTrue(in_array(

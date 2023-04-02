@@ -87,8 +87,7 @@ class BaiduBosAdapter implements FilesystemAdapter
         string $source,
         string $destination,
         Config $config
-    ): void
-    {
+    ): void {
         try {
             $this->client->copyObject($source, $destination);
             $this->client->deleteObject($source);
@@ -112,8 +111,7 @@ class BaiduBosAdapter implements FilesystemAdapter
         string $source,
         string $destination,
         Config $config
-    ): void
-    {
+    ): void {
         try {
             $this->client->copyObject($source, $destination);
         } catch (Throwable $e) {
@@ -154,7 +152,6 @@ class BaiduBosAdapter implements FilesystemAdapter
         try {
             $this->client->getObjectMeta($path);
         } catch (Throwable $e) {
-            error_log($e->getMessage());
             return false;
         }
 
@@ -170,7 +167,12 @@ class BaiduBosAdapter implements FilesystemAdapter
      */
     public function directoryExists(string $path): bool
     {
-        return $this->fileExists($path);
+        try {
+            $lists = $this->listContents($path, false);
+            return !empty($lists);
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 
 
@@ -198,7 +200,6 @@ class BaiduBosAdapter implements FilesystemAdapter
                 $e
             );
         }
-
     }
 
     /**
