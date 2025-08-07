@@ -2,13 +2,10 @@
 Flysystem adapter for BOS(Baidu Object Storage), 百度对象存储 Flysystem 适配器。
 
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Build Status](https://api.travis-ci.org/xinningsu/flysystem-baidu-bos.svg?branch=master)](https://travis-ci.org/xinningsu/flysystem-baidu-bos)
-[![Coverage Status](https://coveralls.io/repos/github/xinningsu/flysystem-baidu-bos/badge.svg?branch=master)](https://coveralls.io/github/xinningsu/flysystem-baidu-bos)
+[![Build Status](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos/badges/build.png?b=master)](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos/build-status/master)
+[![Code Coverage](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos)
 [![Code Intelligence Status](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos/badges/code-intelligence.svg?b=master)](https://scrutinizer-ci.com/g/xinningsu/flysystem-baidu-bos)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=xinningsu_flysystem-baidu-bos&metric=alert_status)](https://sonarcloud.io/dashboard?id=xinningsu_flysystem-baidu-bos)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=xinningsu_flysystem-baidu-bos&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=xinningsu_flysystem-baidu-bos)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=xinningsu_flysystem-baidu-bos&metric=security_rating)](https://sonarcloud.io/dashboard?id=xinningsu_flysystem-baidu-bos)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b0634900a667b22fb5cb/maintainability)](https://codeclimate.com/github/xinningsu/flysystem-baidu-bos/maintainability)
 
 # Installation
